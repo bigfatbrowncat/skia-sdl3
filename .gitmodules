@@ -1,0 +1,15 @@
+[submodule "third_party/skia-world/depot_tools"]
+	path = third_party/skia-world/depot_tools
+	url = https://chromium.googlesource.com/chromium/tools/depot_tools.git
+[submodule "third_party/skia-world/skia"]
+	path = third_party/skia-world/skia
+	url = https://skia.googlesource.com/skia.git
+[submodule "third_party/SDL"]
+	path = third_party/SDL
+	url = https://github.com/libsdl-org/SDL
+[submodule "third_party/wlroots"]
+	path = third_party/wlroots
+	url = https://github.com/swaywm/wlroots
+[submodule "third_party/cage"]
+	path = third_party/cage
+	url = https://github.com/cage-kiosk/cage
