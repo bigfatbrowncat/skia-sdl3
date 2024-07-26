@@ -1,3 +1,4 @@
+set -e
 export SDL_SRC=`pwd`/SDL
 export PREFIX=`pwd`/prefix
 export BUILD_SDL=`pwd`/build/sdl

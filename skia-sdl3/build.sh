@@ -1,3 +1,4 @@
+set -e
 export TP_PREFIX=../third_party/prefix
 g++ skia-sdl3.cpp \
       -o skia-sdl3 \

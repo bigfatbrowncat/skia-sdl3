@@ -6,7 +6,7 @@ cd ..
 
 mkdir -p prefix/lib
 
-cp skia-world/skia/out/Static/*.a prefix/lib/
+cp skia-world/out/Static/*.a prefix/lib/
 
 mkdir -p prefix/include/skia/
 cd skia-world/skia

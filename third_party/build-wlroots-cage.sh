@@ -1,3 +1,4 @@
+set -e
 export WLROOTS_SRC=`pwd`/wlroots
 export CAGE_SRC=`pwd`/cage
 
