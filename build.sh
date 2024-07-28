@@ -3,5 +3,5 @@ cd third_party
 source env.sh
 ./build.sh
 
-cd ../skia-sdl3
+cd ../basic
 ./build.sh
