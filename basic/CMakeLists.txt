@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
+
 project(basic)
 
-add_executable(basic SDLGraphAppBase.cpp)
+add_executable(basic SDLGraphAppBase.cpp basic.cpp)
 set(TP_PREFIX "../third_party/prefix")
+
+set_source_files_properties(basic.cpp PROPERTIES COMPILE_FLAGS "-include ${CMAKE_SOURCE_DIR}/user_app.h")
 
 target_include_directories(basic PUBLIC
       ${TP_PREFIX}/include

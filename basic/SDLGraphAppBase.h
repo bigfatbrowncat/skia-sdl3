@@ -4,7 +4,6 @@
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 
 struct WH {
   int w, h;
@@ -37,4 +36,6 @@ public:
   sk_sp<SkTypeface> getTypeface(const std::string& name);
   SkCanvas* getCanvas();
   void commitDrawing();
+
+  virtual void onLoop() = 0;
 };

@@ -1,5 +1,3 @@
-#include "SDLGraphAppBase.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,13 +5,18 @@
 #include <sstream>
 #include <iostream>
 
+#include "GraphApp.h"
+#include "SDLGraphAppBase.h"
+
+#include <SDL3/SDL_main.h>
+
 using namespace std;
 
 /* This function runs once at startup. */
 int SDL_AppInit(void **appstate, int argc, char *argv[])
 {
   try {
-    *appstate = (void*)(new SDLGraphAppBase());
+    *appstate = (void*)(new GraphApp());
     return SDL_APP_CONTINUE;  /* carry on with the program! */
   } catch (const runtime_error& e) {
     std::cerr << "Unrecoverable initialization error." << endl;
@@ -58,7 +61,7 @@ static int blue_fade_dir = 1;
 int SDL_AppIterate(void *appstate)
 {
   try {
-    SDLGraphAppBase& app = *(SDLGraphAppBase*)appstate;
+    GraphApp& app = *(GraphApp*)appstate;
 
     /* update the color for the next frame we will draw. */
     if (red_fade_dir > 0) {
@@ -110,27 +113,7 @@ int SDL_AppIterate(void *appstate)
     if (blue > 255) blue = 255;
     if (blue < 0) blue = 0;
 
-    //glClearColor(red, green, blue, 1);
-    //glClearStencil(0);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    
-    //app.makeGLContextCurrent(1280, 720);
-
-
-    SkPaint paint, paint2;
-    auto tf = app.getTypeface("sans-serif");
-
-    auto* canvas = app.getCanvas();
-    //canvas->scale((float)0.5, (float)0.5);
-    canvas->clear(SK_ColorBLUE);
-
-    paint2.setColor(SK_ColorRED);
-    canvas->drawRect({100, 200, 400, 300}, paint2);
-
-    SkFont font(tf, 32);
-    paint.setColor(SK_ColorWHITE);
-    canvas->drawString("This is a string!!! It is printed, really!!!!", 50.0f, 30.0f, font, paint);
-
+    app.onLoop();
     app.commitDrawing();
 
 
@@ -156,7 +139,7 @@ int SDL_AppIterate(void *appstate)
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void *appstate)
 {
-    SDLGraphAppBase* app = (SDLGraphAppBase*)appstate;
+    GraphApp* app = (GraphApp*)appstate;
     delete app;
 
     /* SDL will clean up the window/renderer for us. */
