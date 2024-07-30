@@ -19,10 +19,10 @@ using namespace std;
 #endif
 
 /* This function runs once at startup. */
-int SDL_AppInit(void **appstate, int argc, char *argv[])
+int appInit(GraphApp **appstate, int argc, char *argv[])
 {
   try {
-    *appstate = (void*)(new GraphApp());
+    *appstate = new GraphApp();
     return SDL_APP_CONTINUE;  /* carry on with the program! */
   } catch (const runtime_error& e) {
     std::cerr << "Unrecoverable initialization error." << endl;
@@ -33,10 +33,10 @@ int SDL_AppInit(void **appstate, int argc, char *argv[])
 }
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
-int SDL_AppEvent(void *appstate, const SDL_Event *event)
+int appEvent(GraphApp *appstate, const SDL_Event *event)
 {
   try {
-    SDLGraphAppBase& app = *(SDLGraphAppBase*)appstate;
+    SDLGraphAppBase& app = *(dynamic_cast<SDLGraphAppBase*>(appstate));
 
     if (event->type == SDL_EVENT_KEY_DOWN) {
         cout << "Key scancode: " << event->key.scancode << endl;
@@ -57,10 +57,10 @@ int SDL_AppEvent(void *appstate, const SDL_Event *event)
 }
 
 /* This function runs once per frame, and is the heart of the program. */
-int SDL_AppIterate(void *appstate)
+int appIterate(GraphApp *appstate)
 {
   try {
-    GraphApp& app = *(GraphApp*)appstate;
+    GraphApp& app = *appstate;
 
     app.onLoop();
     app.commitDrawing();
@@ -86,42 +86,41 @@ int SDL_AppIterate(void *appstate)
 }
 
 /* This function runs once at shutdown. */
-void SDL_AppQuit(void *appstate)
+void appQuit(GraphApp *appstate)
 {
-    GraphApp* app = (GraphApp*)appstate;
-    delete app;
+    delete appstate;
 
     /* SDL will clean up the window/renderer for us. */
 }
 
 int main(int argc, char *argv[]) {
-  int FPS = 0;
 
-  auto mspf = 0;
-  if (FPS > 0) mspf = 1000 / FPS;
-
-  void* appstate = nullptr;
-
-  auto res = SDL_AppInit(&appstate, argc, argv);
+  GraphApp* appstate = nullptr;
+  auto res = appInit(&appstate, argc, argv);
 
   //auto res = SDL_APP_CONTINUE;
   SDL_Event event;
   while (res == SDL_APP_CONTINUE) {
     auto prev_time = SDL_GetTicks();
-    res = SDL_AppIterate(appstate);
+    res = appIterate(appstate);
+
+    int FPS = appstate->getFPS();
+    auto mspf = 0;
+    if (FPS > 0) mspf = 1000 / FPS;
+
 
     if (FPS > 0) {
       while (SDL_GetTicks() - prev_time < mspf && res == SDL_APP_CONTINUE) {
         SDL_WaitEventTimeout(&event, mspf - (SDL_GetTicks() - prev_time));
-        res = SDL_AppEvent(appstate, &event);
+        res = appEvent(appstate, &event);
       }
     } else {
       SDL_WaitEvent(&event);
-      res = SDL_AppEvent(appstate, &event);
+      res = appEvent(appstate, &event);
     }
   }
 
-  SDL_AppQuit(appstate);
+  appQuit(appstate);
   return res;
 }
 
@@ -149,7 +148,7 @@ void SDLGraphAppBase::initSDL() {
   }
 }
 
-WH SDLGraphAppBase::getScreenSize() {
+IntSize SDLGraphAppBase::getScreenSize() {
   int count;
   const SDL_DisplayID* ids = SDL_GetDisplays(&count);
   if (ids == nullptr) throwSDLError("Can not get the displays info.");
@@ -159,7 +158,7 @@ WH SDLGraphAppBase::getScreenSize() {
 
   const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(ids[0]);
   if (dm == 0) throwSDLError("Can not get screen size.");
-  return WH { dm->w, dm->h };
+  return IntSize { dm->w, dm->h };
 }
 
 void SDLGraphAppBase::createSDLWindowAndContext() {
@@ -230,7 +229,7 @@ SDLGraphAppBase::SDLGraphAppBase() {
   createFontMgr();
   initSDL();
   createSDLWindowAndContext();
-  WH scrSz = getScreenSize();
+  IntSize scrSz = getScreenSize();
   makeGLContextCurrent(scrSz.w, scrSz.h);
   createSkiaContext();
   createSkiaSurface(scrSz.w, scrSz.h);

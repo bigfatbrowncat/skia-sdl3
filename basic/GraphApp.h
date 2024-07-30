@@ -15,6 +15,8 @@ private:
   sk_sp<SkTypeface> typeface;
   SkFont font;
 
+  int FPS;
+
   void updateFont() {
     typeface = getTypeface(typefaceName);
     font = SkFont(typeface, fontSize);
@@ -34,7 +36,8 @@ public:
         foreColor(SkColor4f({ 0.8f, 0.8f, 0.8f, 1.0f })),
         typefaceName("sans-serif"),
         fontSize(20.0f),
-        typeface(getTypeface(typefaceName)) {
+        typeface(getTypeface(typefaceName)),
+        FPS(60) {
     updateFont();
     updateForePaint();
     updateBackPaint();
@@ -83,6 +86,14 @@ public:
 
   void clear() {
     getCanvas()->clear(backColor);
+  }
+
+  void setFPS(int FPS) {
+    this->FPS = FPS;
+  }
+
+  int getFPS() {
+    return FPS;
   }
 
   // Should be implemented by the user

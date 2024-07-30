@@ -5,7 +5,7 @@
 //#define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
 
-struct WH {
+struct IntSize {
   int w, h;
 };
 
@@ -22,8 +22,6 @@ private:
   void createFontMgr();
   void initSDL();
 
-  WH getScreenSize();
-
   void createSDLWindowAndContext();
   void makeGLContextCurrent(int w, int h);
   void createSkiaContext();
@@ -37,5 +35,6 @@ public:
   SkCanvas* getCanvas();
   void commitDrawing();
 
+  IntSize getScreenSize();
   virtual void onLoop() = 0;
 };
