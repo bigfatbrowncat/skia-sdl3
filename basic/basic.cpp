@@ -3,13 +3,13 @@
 #include <chrono>
 
 using namespace std;
-
 using clk = chrono::high_resolution_clock;
 
 clk::time_point start;
 
 onInit {
   start = clk::now();
+  SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "1");
 }
 
 onLoop {
@@ -23,7 +23,7 @@ onLoop {
   ss << std::fixed << std::setprecision(2) << sec;
 
   setFontSize(80.0f);
-  drawString(ss.str(), 10, 90.0f);
+  drawString(ss.str(), 100, 90.0f);
 }
 
 onFin { }

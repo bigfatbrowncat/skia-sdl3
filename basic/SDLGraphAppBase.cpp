@@ -12,6 +12,12 @@
 
 using namespace std;
 
+#ifndef SDL_APP_CONTINUE
+#  define SDL_APP_CONTINUE 0
+#  define SDL_APP_FAILURE -1
+#  define SDL_APP_SUCCESS 1
+#endif
+
 /* This function runs once at startup. */
 int SDL_AppInit(void **appstate, int argc, char *argv[])
 {
@@ -50,68 +56,11 @@ int SDL_AppEvent(void *appstate, const SDL_Event *event)
   }
 }
 
-/* the current red color we're clearing to. */
-static int red = 0, green = 0, blue = 0;
-/* When fading up, this is 1, when fading down, it's -1. */
-static int red_fade_dir = 1;
-static int green_fade_dir = 1;
-static int blue_fade_dir = 1;
-
 /* This function runs once per frame, and is the heart of the program. */
 int SDL_AppIterate(void *appstate)
 {
   try {
     GraphApp& app = *(GraphApp*)appstate;
-
-    /* update the color for the next frame we will draw. */
-    if (red_fade_dir > 0) {
-        if (red == 255) {
-            red_fade_dir = -1;
-        } else {
-            red+=4;
-        }
-    } else if (red_fade_dir < 0) {
-        if (red == 0) {
-            red_fade_dir = 1;
-        } else {
-            red-=3;
-        }
-    }
-
-    if (green_fade_dir > 0) {
-        if (green == 255) {
-            green_fade_dir = -1;
-        } else {
-            green+=2;
-        }
-    } else if (green_fade_dir < 0) {
-        if (green == 0) {
-            green_fade_dir = 1;
-        } else {
-            green-=2;
-        }
-    }
-
-    if (blue_fade_dir > 0) {
-        if (blue == 255) {
-            blue_fade_dir = -1;
-        } else {
-            blue+=1;
-        }
-    } else if (blue_fade_dir < 0) {
-        if (blue == 0) {
-            blue_fade_dir = 1;
-        } else {
-            blue-=2;
-        }
-    }
-
-    if (red > 255) red = 255;
-    if (red < 0) red = 0;
-    if (green > 255) green = 255;
-    if (green < 0) green = 0;
-    if (blue > 255) blue = 255;
-    if (blue < 0) blue = 0;
 
     app.onLoop();
     app.commitDrawing();
@@ -143,6 +92,37 @@ void SDL_AppQuit(void *appstate)
     delete app;
 
     /* SDL will clean up the window/renderer for us. */
+}
+
+int main(int argc, char *argv[]) {
+  int FPS = 0;
+
+  auto mspf = 0;
+  if (FPS > 0) mspf = 1000 / FPS;
+
+  void* appstate = nullptr;
+
+  auto res = SDL_AppInit(&appstate, argc, argv);
+
+  //auto res = SDL_APP_CONTINUE;
+  SDL_Event event;
+  while (res == SDL_APP_CONTINUE) {
+    auto prev_time = SDL_GetTicks();
+    res = SDL_AppIterate(appstate);
+
+    if (FPS > 0) {
+      while (SDL_GetTicks() - prev_time < mspf && res == SDL_APP_CONTINUE) {
+        SDL_WaitEventTimeout(&event, mspf - (SDL_GetTicks() - prev_time));
+        res = SDL_AppEvent(appstate, &event);
+      }
+    } else {
+      SDL_WaitEvent(&event);
+      res = SDL_AppEvent(appstate, &event);
+    }
+  }
+
+  SDL_AppQuit(appstate);
+  return res;
 }
 
 /////////////////////////////////////////////////////////////////////////
