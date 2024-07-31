@@ -84,6 +84,14 @@ public:
     getCanvas()->drawString(SkString(str), x, y, font, forePaint);
   }
 
+  void rotate(float angle_deg) {
+    getCanvas()->rotate(angle_deg);
+  }
+
+  void translate(float dx, float dy) {
+    getCanvas()->translate(dx, dy);
+  }
+
   void clear() {
     getCanvas()->clear(backColor);
   }
