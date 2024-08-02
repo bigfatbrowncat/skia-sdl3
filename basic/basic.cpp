@@ -3,22 +3,27 @@
 #include <iomanip>
 #include <chrono>
 
+#include <GraphApp.h>
+
 using namespace std;
 using clk = chrono::high_resolution_clock;
 
-clk::time_point start;
-float angle;
+class UserApp : public GraphApp {
 
-ofstream power_log;
-int prev_min;
+  clk::time_point start;
+  float angle;
 
-onInit {
-  start = clk::now();
-  angle = 0.0;
-  power_log = ofstream("powerlog.txt");
-}
+  ofstream power_log;
+  int prev_min;
 
-onLoop {
+public:
+  UserApp() {
+    start = clk::now();
+    angle = 0.0;
+    power_log = ofstream("powerlog.txt");
+  }
+
+void onLoop() {
   ifstream bat("/sys/class/power_supply/axp20x-battery/capacity");
   string capacity;
   bat >> capacity;
@@ -89,4 +94,21 @@ onLoop {
   }
 }
 
-onFin { }
+};
+
+std::map<GraphAppCont*, GraphApp*> GraphApp::apps;
+
+GraphApp* createUserApp() { return new UserApp; }
+GraphAppFactory* GraphApp::factory = &createUserApp;
+
+int main() {
+  GraphApp::factory = &createUserApp;
+  GraphAppCallbacks cb;
+  cb.onInit = &GraphApp::staticInit;
+  cb.onLoop = &GraphApp::staticLoop;
+  cb.onFin = &GraphApp::staticFin;
+
+  GraphApp_main(&cb);
+
+  return 0;
+}

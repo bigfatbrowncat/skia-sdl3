@@ -1,13 +1,10 @@
 #pragma once
 
+#include "basic_api.h"
+
 #include "externals.h"
 
-//#define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
-
-struct IntSize {
-  int w, h;
-};
 
 class SDLGraphAppBase {
 private:
@@ -36,5 +33,5 @@ public:
   void commitDrawing();
 
   IntSize getScreenSize();
-  virtual void onLoop() = 0;
+  //virtual void onLoop() = 0;
 };

@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "GraphApp.h"
+#include "GraphAppImpl.h"
 #include "SDLGraphAppBase.h"
 
 #include <SDL3/SDL_main.h>
@@ -19,10 +19,12 @@ using namespace std;
 #endif
 
 /* This function runs once at startup. */
-int appInit(GraphApp **appstate, int argc, char *argv[])
+int appInit(GraphAppCont **appstate, GraphAppCallbacks* cb)
 {
   try {
-    *appstate = new GraphApp();
+    *appstate = new GraphAppCont;
+    (*appstate)->impl = new GraphAppImpl(cb);
+    (*appstate)->impl->cb->onInit(*appstate);
     return SDL_APP_CONTINUE;  /* carry on with the program! */
   } catch (const runtime_error& e) {
     std::cerr << "Unrecoverable initialization error." << endl;
@@ -33,10 +35,10 @@ int appInit(GraphApp **appstate, int argc, char *argv[])
 }
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
-int appEvent(GraphApp *appstate, const SDL_Event *event)
+int appEvent(GraphAppCont *appstate, const SDL_Event *event)
 {
   try {
-    SDLGraphAppBase& app = *(dynamic_cast<SDLGraphAppBase*>(appstate));
+    SDLGraphAppBase& app = *(dynamic_cast<SDLGraphAppBase*>(appstate->impl));
 
     if (event->type == SDL_EVENT_KEY_DOWN) {
         cout << "Key scancode: " << event->key.scancode << endl;
@@ -57,24 +59,14 @@ int appEvent(GraphApp *appstate, const SDL_Event *event)
 }
 
 /* This function runs once per frame, and is the heart of the program. */
-int appIterate(GraphApp *appstate)
+int appIterate(GraphAppCont *appstate)
 {
   try {
-    GraphApp& app = *appstate;
+    GraphAppImpl* app = appstate->impl;
 
-    app.onLoop();
-    app.commitDrawing();
+    app->cb->onLoop(appstate);
+    app->commitDrawing();
 
-
-    /* since we're always fading red, we leave green and blue at zero.
-       alpha doesn't mean much here, so leave it at full (255, no transparency). */
-    //SDL_SetRenderDrawColor(renderer, red, green, blue, 255);
-
-    /* clear the window to the draw color. */
-    //SDL_RenderClear(renderer);
-
-    /* put the newly-cleared rendering on the screen. */
-    //SDL_RenderPresent(renderer);
 
     return SDL_APP_CONTINUE;  /* carry on with the program! */
   } catch (const runtime_error& e) {
@@ -86,17 +78,25 @@ int appIterate(GraphApp *appstate)
 }
 
 /* This function runs once at shutdown. */
-void appQuit(GraphApp *appstate)
+void appQuit(GraphAppCont *appstate)
 {
-    delete appstate;
+  appstate->impl->cb->onFin(appstate);
+  delete appstate->impl;
+  delete appstate;
 
-    /* SDL will clean up the window/renderer for us. */
+  /* SDL will clean up the window/renderer for us. */
 }
 
-int main(int argc, char *argv[]) {
+//struct GraphAppCallbacks {
+//  init_callback* onInit;
+//  loop_callback* onLoop;
+//  fin_callback* onFin;
+//};
 
-  GraphApp* appstate = nullptr;
-  auto res = appInit(&appstate, argc, argv);
+extern "C" int GraphApp_main(GraphAppCallbacks* cb) {
+
+  GraphAppCont* appstate = nullptr;
+  auto res = appInit(&appstate, cb);
 
   //auto res = SDL_APP_CONTINUE;
   SDL_Event event;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     auto prev_time = SDL_GetTicks();
     res = appIterate(appstate);
 
-    int FPS = appstate->getFPS();
+    int FPS = appstate->impl->getFPS();
     auto mspf = 0;
     if (FPS > 0) mspf = 1000 / FPS;
 
