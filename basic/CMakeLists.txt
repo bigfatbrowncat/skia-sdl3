@@ -42,14 +42,14 @@ target_link_libraries(basic PRIVATE
 
 # App
 
-add_executable(basicapp
-    basic.cpp
-)
+#add_executable(basicapp
+#    basic.cpp
+#)
 
-target_include_directories(basicapp PUBLIC
-    ${PROJECT_SOURCE_DIR}
-)
+#target_include_directories(basicapp PUBLIC
+#    ${PROJECT_SOURCE_DIR}
+#)
 
-target_link_libraries(basicapp PUBLIC
-    basic
-)
+#target_link_libraries(basicapp PUBLIC
+#    basic
+#)

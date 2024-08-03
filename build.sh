@@ -1,7 +1,9 @@
 set -e
-cd third_party
-source env.sh
-./build.sh
 
-cd ../basic
-./build.sh
+mkdir -p build
+cd build
+cmake ..
+cmake --build .
+
+#./build.sh
+
