@@ -6,12 +6,13 @@ project(basic)
 
 add_library(basic SHARED
     SDLGraphAppBase.cpp
+    GraphAppImpl.cpp
     basic_api.cpp
 )
 
 set(TP_PREFIX "../third_party/prefix")
 
-#set_source_files_properties(basic.cpp PROPERTIES COMPILE_FLAGS "-include ${CMAKE_SOURCE_DIR}/user_app.h")
+#set_source_files_properties(basic.cpp PROPERTIES COMPILE_FLAGS "-include ${CMAKE_SOURCE_DIR}/user_app.inc")
 
 target_include_directories(basic PRIVATE
       ${TP_PREFIX}/include
