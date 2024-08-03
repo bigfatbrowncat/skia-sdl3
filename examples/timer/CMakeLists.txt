@@ -7,7 +7,7 @@ add_executable(timer
 )
 
 target_include_directories(timer PUBLIC
-    ${PROJECT_SOURCE_DIR}
+    ${basic_SOURCE_DIR}
 )
 
 target_link_libraries(timer PUBLIC

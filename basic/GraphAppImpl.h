@@ -52,7 +52,7 @@ public:
   void rotate(float angle_deg);
   void translate(float dx, float dy);
   void clear();
-
+  FloatRect measureText(const std::string& str);
 };
 
 struct GraphAppCont {

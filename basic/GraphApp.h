@@ -2,6 +2,7 @@
 
 #include "basic_api.h"
 
+#include <string>
 #include <map>
 
 struct GraphAppCont;
@@ -94,6 +95,10 @@ public:
 
   IntSize getScreenSize() {
     return GraphApp_getScreenSize(cont);
+  }
+
+  FloatRect measureText(const std::string& text) {
+    return GraphApp_measureText(cont, text.c_str());
   }
 
   virtual void onLoop() = 0;

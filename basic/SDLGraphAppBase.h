@@ -33,5 +33,4 @@ public:
   void commitDrawing();
 
   IntSize getScreenSize();
-  //virtual void onLoop() = 0;
 };

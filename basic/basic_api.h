@@ -7,6 +7,10 @@ typedef struct IntSize {
   int w,h;
 } IntSize;
 
+typedef struct FloatRect {
+  float left, top, right, bottom;
+} FloatRect;
+
 extern "C" {
 
 int GraphApp_main(GraphAppCallbacks* cb);
@@ -23,5 +27,5 @@ void GraphApp_rotate(GraphAppCont* self, float angle_deg);
 void GraphApp_translate(GraphAppCont* self, float dx, float dy);
 void GraphApp_clear(GraphAppCont* self);
 IntSize GraphApp_getScreenSize(GraphAppCont* self);
-
+FloatRect GraphApp_measureText(GraphAppCont* self, const char* text);
 }

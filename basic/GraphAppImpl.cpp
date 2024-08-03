@@ -87,3 +87,9 @@ void GraphAppImpl::translate(float dx, float dy) {
 void GraphAppImpl::clear() {
   getCanvas()->clear(backColor);
 }
+
+FloatRect GraphAppImpl::measureText(const std::string& str) {
+  SkRect bounds;
+  font.measureText(str.c_str(), str.size(), SkTextEncoding::kUTF8, &bounds);
+  return { bounds.left(), bounds.top(), bounds.right(), bounds.bottom() };
+}
