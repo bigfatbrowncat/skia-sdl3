@@ -3,13 +3,29 @@
 struct GraphAppCont;
 struct GraphAppCallbacks;
 
+typedef void init_callback(GraphAppCont*);
+typedef void loop_callback(GraphAppCont*);
+typedef void fin_callback(GraphAppCont*);
+
+struct GraphAppCallbacks {
+  init_callback* onInit;
+  loop_callback* onLoop;
+  fin_callback* onFin;
+};
+
 typedef struct IntSize {
   int w,h;
 } IntSize;
 
-typedef struct FloatRect {
+typedef struct TextBounds {
   float left, top, right, bottom;
-} FloatRect;
+} TextBounds;
+
+typedef struct TextMeasures {
+  TextBounds bounds;
+  float width;
+} TextMeasures;
+
 
 extern "C" {
 
@@ -27,5 +43,5 @@ void GraphApp_rotate(GraphAppCont* self, float angle_deg);
 void GraphApp_translate(GraphAppCont* self, float dx, float dy);
 void GraphApp_clear(GraphAppCont* self);
 IntSize GraphApp_getScreenSize(GraphAppCont* self);
-FloatRect GraphApp_measureText(GraphAppCont* self, const char* text);
+TextMeasures GraphApp_measureText(GraphAppCont* self, const char* text);
 }

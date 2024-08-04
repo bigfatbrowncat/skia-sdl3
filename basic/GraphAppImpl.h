@@ -4,16 +4,6 @@
 
 struct GraphAppCont;
 
-typedef void init_callback(GraphAppCont*);
-typedef void loop_callback(GraphAppCont*);
-typedef void fin_callback(GraphAppCont*);
-
-struct GraphAppCallbacks {
-  init_callback* onInit;
-  loop_callback* onLoop;
-  fin_callback* onFin;
-};
-
 class GraphAppImpl : public SDLGraphAppBase {
 
 private:
@@ -52,7 +42,7 @@ public:
   void rotate(float angle_deg);
   void translate(float dx, float dy);
   void clear();
-  FloatRect measureText(const std::string& str);
+  TextMeasures measureText(const std::string& str);
 };
 
 struct GraphAppCont {

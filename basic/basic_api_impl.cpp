@@ -52,7 +52,7 @@ IntSize GraphApp_getScreenSize(GraphAppCont* self) {
   return self->impl->getScreenSize();
 }
 
-FloatRect GraphApp_measureText(GraphAppCont* self, const char* text) {
+TextMeasures GraphApp_measureText(GraphAppCont* self, const char* text) {
   return self->impl->measureText(std::string(text));
 }
 

@@ -7,33 +7,37 @@ FIN() {
 }
 
 LOOP() {
+  // Setting minimal FPS
   setFPS(1);
 
+  // Finding out the screen size
+  auto scrSize = getScreenSize();
+
+  // Clearing the background with blue
   setBackColor(0.25, 0.25, 0.5);
   clear();
 
   string hello = "Hello, world!";
 
-  setFontSize(150.0f);
-
-  // Calculating the text position
+  // Setting the font size proportional to the screen size
+  setFontSize(scrSize.w / 8);
 
   // Measuring the text line using the current font
-  FloatRect textRect = measureText(hello);
+  auto textMeasures = measureText(hello);
 
-  auto w = textRect.right - textRect.left, \
-       h = textRect.bottom - textRect.top;
+  // Calculating the text width and height
+  auto w = textMeasures.width, \
+       h = textMeasures.bounds.bottom - textMeasures.bounds.top;
 
-  // Finding out the screen size
-  auto scrSize = getScreenSize();
   // Setting l and t to the center of the screen
   auto l = scrSize.w / 2, t = scrSize.h / 2;
 
   // Moving l left half of the text size
   l -= w / 2;
+
   // Moving t down half of the text size (there should be the baseline)
   t += h / 2;
 
-  // Drawing
+  // Drawing the text starting at the l and t
   drawString(hello, l, t);
 }

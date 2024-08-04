@@ -88,8 +88,9 @@ void GraphAppImpl::clear() {
   getCanvas()->clear(backColor);
 }
 
-FloatRect GraphAppImpl::measureText(const std::string& str) {
+TextMeasures GraphAppImpl::measureText(const std::string& str) {
   SkRect bounds;
-  font.measureText(str.c_str(), str.size(), SkTextEncoding::kUTF8, &bounds);
-  return { bounds.left(), bounds.top(), bounds.right(), bounds.bottom() };
+  auto width = font.measureText(str.c_str(), str.size(), SkTextEncoding::kUTF8, &bounds);
+  return { TextBounds { bounds.left(), bounds.top(), bounds.right(), bounds.bottom() }, width };
+  //return { 0, bounds.top(), width, bounds.bottom() };
 }

@@ -7,16 +7,6 @@
 
 struct GraphAppCont;
 
-typedef void init_callback(GraphAppCont*);
-typedef void loop_callback(GraphAppCont*);
-typedef void fin_callback(GraphAppCont*);
-
-struct GraphAppCallbacks {
-  init_callback* onInit;
-  loop_callback* onLoop;
-  fin_callback* onFin;
-};
-
 class GraphApp;
 
 typedef GraphApp* GraphAppFactory();
@@ -97,7 +87,7 @@ public:
     return GraphApp_getScreenSize(cont);
   }
 
-  FloatRect measureText(const std::string& text) {
+  TextMeasures measureText(const std::string& text) {
     return GraphApp_measureText(cont, text.c_str());
   }
 
