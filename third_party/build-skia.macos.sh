@@ -1,7 +1,7 @@
 set -e
 cd skia-world
 source env.sh
-./build-debug.sh
+./build-debug.macos.sh
 cd ..
 
 mkdir -p prefix/lib
@@ -11,8 +11,8 @@ mkdir -p prefix/lib
 mkdir -p prefix/include/skia/
 
 cp_dir() {
-    abs1=$(readlink -m "$1")
-    mkdir -p $(dirname "$abs") && ln -fs "$abs1" "$2"
+    abs1=$(readlink -f "$1")
+    mkdir -p $(dirname "$2") && ln -fs "$abs1" "$2"
 }
 export -f cp_dir
 

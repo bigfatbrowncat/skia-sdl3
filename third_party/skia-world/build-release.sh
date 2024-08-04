@@ -1,5 +1,6 @@
 cd skia
 
+python3 bin/fetch-gn
 python3 tools/git-sync-deps
 python3 bin/fetch-ninja
 

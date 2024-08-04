@@ -13,8 +13,15 @@
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkSurface.h"
-#include "include/ports/SkFontMgr_fontconfig.h"
 
 #include "src/gpu/ganesh/gl/GrGLDefines.h"
 
-#include <GL/gl.h>
+#ifdef __APPLE__
+#  include "include/ports/SkFontMgr_mac_ct.h"
+#else
+#  include "include/ports/SkFontMgr_fontconfig.h"
+
+#  include <GL/gl.h>
+#endif
+
+
