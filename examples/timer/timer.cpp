@@ -29,7 +29,7 @@ public:
     bat >> capacity;
 
     auto scrSize = getScreenSize();
-    auto l = scrSize.w / 2, t = scrSize.h / 2;
+    auto l = scrSize.width / 2, t = scrSize.height / 2;
 
     auto w = 600, h = 350;
     l -= w / 2;

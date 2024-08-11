@@ -38,17 +38,3 @@ target_link_libraries(basic PRIVATE
       fontconfig
       z
 )
-
-# App
-
-#add_executable(basicapp
-#    basic.cpp
-#)
-
-#target_include_directories(basicapp PUBLIC
-#    ${PROJECT_SOURCE_DIR}
-#)
-
-#target_link_libraries(basicapp PUBLIC
-#    basic
-#)

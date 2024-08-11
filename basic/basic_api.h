@@ -14,7 +14,7 @@ struct GraphAppCallbacks {
 };
 
 typedef struct IntSize {
-  int w,h;
+  int width, height;
 } IntSize;
 
 typedef struct TextBounds {

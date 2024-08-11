@@ -1,4 +1,4 @@
 build
 prefix
 third_party/skia-world/out
-third_party/skia-world/.cache
+**/.cache

@@ -92,20 +92,22 @@ public:
   }
 
   virtual void onLoop() = 0;
+
+  virtual ~GraphApp() { }
 };
 
-#define BASIC_ENTRY(USER_APP)					\
-        std::map<GraphAppCont*, GraphApp*> GraphApp::apps;	\
-        int main() {						\
-          GraphAppCallbacks cb;					\
-          cb.onInit = &GraphApp::staticInit;			\
-          cb.onLoop = &GraphApp::staticLoop;			\
-          cb.onFin = &GraphApp::staticFin;			\
-								\
-          GraphApp_main(&cb);					\
-								\
-          return 0;						\
-        }							\
-								\
-        GraphAppFactory* GraphApp::factory =			\
+#define BASIC_ENTRY(USER_APP)                               \
+        std::map<GraphAppCont*, GraphApp*> GraphApp::apps;  \
+        int main() {                                        \
+          GraphAppCallbacks cb;                             \
+          cb.onInit = &GraphApp::staticInit;                \
+          cb.onLoop = &GraphApp::staticLoop;                \
+          cb.onFin = &GraphApp::staticFin;                  \
+                                                            \
+          GraphApp_main(&cb);                               \
+                                                            \
+          return 0;                                         \
+        }                                                   \
+                                                            \
+        GraphAppFactory* GraphApp::factory =                \
             []() -> GraphApp* { return new USER_APP; };

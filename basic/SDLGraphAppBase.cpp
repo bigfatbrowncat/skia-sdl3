@@ -230,9 +230,9 @@ SDLGraphAppBase::SDLGraphAppBase() {
   initSDL();
   createSDLWindowAndContext();
   IntSize scrSz = getScreenSize();
-  makeGLContextCurrent(scrSz.w, scrSz.h);
+  makeGLContextCurrent(scrSz.width, scrSz.height);
   createSkiaContext();
-  createSkiaSurface(scrSz.w, scrSz.h);
+  createSkiaSurface(scrSz.width, scrSz.height);
 }
 
 SDLGraphAppBase::~SDLGraphAppBase() {
