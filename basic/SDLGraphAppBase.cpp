@@ -12,6 +12,8 @@
 
 using namespace std;
 
+#define TURN_SCREEN 1
+
 #ifndef SDL_APP_CONTINUE
 #  define SDL_APP_CONTINUE 0
 #  define SDL_APP_FAILURE -1
@@ -87,22 +89,29 @@ void appQuit(GraphAppCont *appstate)
   /* SDL will clean up the window/renderer for us. */
 }
 
-//struct GraphAppCallbacks {
-//  init_callback* onInit;
-//  loop_callback* onLoop;
-//  fin_callback* onFin;
-//};
-
 extern "C" int GraphApp_main(GraphAppCallbacks* cb) {
 
   GraphAppCont* appstate = nullptr;
+
   auto res = appInit(&appstate, cb);
+  GraphAppImpl* app = appstate->impl;
+
+  IntSize sz = app->getScreenSize();
+
 
   //auto res = SDL_APP_CONTINUE;
   SDL_Event event;
   while (res == SDL_APP_CONTINUE) {
     auto prev_time = SDL_GetTicks();
+    if (TURN_SCREEN) {
+      app->getCanvas()->translate(sz.height, 0);
+      app->getCanvas()->rotate(90);
+    }
     res = appIterate(appstate);
+    if (TURN_SCREEN) {
+      app->getCanvas()->rotate(-90);
+      app->getCanvas()->translate(-sz.height, 0);
+    }
 
     int FPS = appstate->impl->getFPS();
     auto mspf = 0;
@@ -158,7 +167,12 @@ IntSize SDLGraphAppBase::getScreenSize() {
 
   const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(ids[0]);
   if (dm == 0) throwSDLError("Can not get screen size.");
-  return IntSize { dm->w, dm->h };
+
+  if (TURN_SCREEN) {
+    return IntSize { dm->h, dm->w };
+  } else {
+    return IntSize { dm->w, dm->h };
+  }
 }
 
 void SDLGraphAppBase::createSDLWindowAndContext() {
@@ -230,9 +244,17 @@ SDLGraphAppBase::SDLGraphAppBase() {
   initSDL();
   createSDLWindowAndContext();
   IntSize scrSz = getScreenSize();
-  makeGLContextCurrent(scrSz.width, scrSz.height);
+
+  makeGLContextCurrent(0, 0);
+
   createSkiaContext();
-  createSkiaSurface(scrSz.width, scrSz.height);
+
+
+  if (TURN_SCREEN) {
+    createSkiaSurface(scrSz.height, scrSz.width);
+  } else {
+    createSkiaSurface(scrSz.width, scrSz.height);
+  }
 }
 
 SDLGraphAppBase::~SDLGraphAppBase() {
