@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,6 +8,7 @@
 
 #include "GraphAppImpl.h"
 #include "SDLGraphAppBase.h"
+#include "SDL_oldnames.h"
 
 #include <SDL3/SDL_main.h>
 
@@ -98,11 +100,11 @@ extern "C" int GraphApp_main(GraphAppCallbacks* cb) {
 
   IntSize sz = app->getScreenSize();
 
-
   //auto res = SDL_APP_CONTINUE;
   SDL_Event event;
   while (res == SDL_APP_CONTINUE) {
     auto prev_time = SDL_GetTicks();
+
     if (TURN_SCREEN) {
       app->getCanvas()->translate(sz.height, 0);
       app->getCanvas()->rotate(90);
@@ -151,33 +153,103 @@ void SDLGraphAppBase::createFontMgr() {
   cout << "Font families count: " << families << endl;
 }
 
+
+std::shared_ptr<SDL_DisplayID> SDLGraphAppBase::getMainDisplay() {
+  int num_displays = 0;
+  std::shared_ptr<SDL_DisplayID> res = nullptr;
+  const SDL_DisplayID *displays = SDL_GetDisplays(&num_displays);
+  if (displays) {
+    cout << "Displays: " << std::endl;
+    for (int i = 0; i < num_displays; i++) {
+      SDL_DisplayID instance_id = displays[i];
+      const char *name = SDL_GetDisplayName(instance_id);
+      cout << "Display #" << instance_id << " : ";
+      if (name != nullptr) {
+        cout << name;
+      } else {
+        cout << "No name";
+      }
+      cout << endl;
+
+      int num_modes;
+      const SDL_DisplayMode * const* modes = SDL_GetFullscreenDisplayModes(instance_id, &num_modes);
+      cout << " - Modes:" << endl;
+      if (modes) {
+        for (int i = 0; i < num_modes; i++) {
+          const SDL_DisplayMode *mode = modes[i];
+          cout << "   - " << mode->w << "x" << mode->h << " @ " << mode->refresh_rate << ", density = " << mode->pixel_density << endl;
+        }
+        //SDL_CleanupTemporaryMemory((void*)modes); //-- !!!
+      }
+
+      SDL_Rect bounds;
+      SDL_GetDisplayBounds( instance_id, &bounds );
+      cout << " - Bounds: " << bounds.x << ", " << bounds.y << ", " << bounds.w << ", " << bounds.h << std::endl;
+
+      //SDL_DisplayData *pData =(SDL_DisplayData*)SDL_GetDisplayDriverData(displayIndex);
+
+      if (num_modes == 1 && modes[0]->w == 720 && modes[0]->h == 1280) {
+        res = std::make_shared<SDL_DisplayID>(instance_id);
+      }
+    }
+    //SDL_CleanupTemporaryMemory((void*)displays);
+  }
+  return res;
+}
+
 void SDLGraphAppBase::initSDL() {
   if (SDL_Init(SDL_INIT_VIDEO) == -1) {
-      throwSDLError("Couldn't initialize SDL!");
+    throwSDLError("Couldn't initialize SDL!");
   }
 }
 
 IntSize SDLGraphAppBase::getScreenSize() {
-  int count;
-  const SDL_DisplayID* ids = SDL_GetDisplays(&count);
-  if (ids == nullptr) throwSDLError("Can not get the displays info.");
-  if (count < 1) {
-    throw runtime_error("No displays found");
+  auto main_display_id = getMainDisplay();
+  if (main_display_id == nullptr) {
+    throw std::runtime_error("Can not find the standard display");
   }
 
-  const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(ids[0]);
-  if (dm == 0) throwSDLError("Can not get screen size.");
+  SDL_Rect display_bounds;
+  SDL_GetDisplayBounds( *main_display_id, &display_bounds );
+
+
+  // int count;
+  // const SDL_DisplayID* ids = SDL_GetDisplays(&count);
+  // if (ids == nullptr) throwSDLError("Can not get the displays info.");
+  // if (count < 1) {
+  //   throw runtime_error("No displays found");
+  // }
+
+  // const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(ids[0]);
+  // if (dm == 0) throwSDLError("Can not get screen size.");
 
   if (TURN_SCREEN) {
-    return IntSize { dm->h, dm->w };
+    return IntSize { display_bounds.h, display_bounds.w };
   } else {
-    return IntSize { dm->w, dm->h };
+    return IntSize { display_bounds.w, display_bounds.h };
   }
 }
 
 void SDLGraphAppBase::createSDLWindowAndContext() {
 
-  window = SDL_CreateWindow("SDL Window", 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+  auto main_display_id = getMainDisplay();
+  if (main_display_id == nullptr) {
+    throw std::runtime_error("Can not find the standard display");
+  }
+
+  SDL_Rect display_bounds;
+  SDL_GetDisplayBounds( *main_display_id, &display_bounds );
+
+  SDL_PropertiesID props = SDL_CreateProperties();
+  SDL_SetStringProperty(props, "title", "SDL window");
+  SDL_SetNumberProperty(props, "x", display_bounds.x);
+  SDL_SetNumberProperty(props, "y", display_bounds.y);
+  SDL_SetNumberProperty(props, "width", display_bounds.w);
+  SDL_SetNumberProperty(props, "height", display_bounds.h);
+  SDL_SetNumberProperty(props, "flags", SDL_WINDOW_OPENGL /*| SDL_WINDOW_FULLSCREEN*/);
+  window = SDL_CreateWindowWithProperties(props);
+  SDL_DestroyProperties(props);
+
   if (window == nullptr) {
     throwSDLError("Can't create a window.");
   }
@@ -189,7 +261,7 @@ void SDLGraphAppBase::createSDLWindowAndContext() {
   }
 }
 
-void SDLGraphAppBase::makeGLContextCurrent(int w, int h) {
+void SDLGraphAppBase::makeGLContextCurrent() {
 
   int success =  SDL_GL_MakeCurrent(window, glContext);
   if (success != 0) {
@@ -245,7 +317,7 @@ SDLGraphAppBase::SDLGraphAppBase() {
   createSDLWindowAndContext();
   IntSize scrSz = getScreenSize();
 
-  makeGLContextCurrent(0, 0);
+  makeGLContextCurrent();
 
   createSkiaContext();
 

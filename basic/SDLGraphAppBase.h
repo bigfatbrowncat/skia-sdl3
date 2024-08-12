@@ -20,7 +20,7 @@ private:
   void initSDL();
 
   void createSDLWindowAndContext();
-  void makeGLContextCurrent(int w, int h);
+  void makeGLContextCurrent();
   void createSkiaContext();
   void createSkiaSurface(int w, int h);
 
@@ -31,6 +31,7 @@ public:
   sk_sp<SkTypeface> getTypeface(const std::string& name);
   SkCanvas* getCanvas();
   void commitDrawing();
+  std::shared_ptr<SDL_DisplayID> getMainDisplay();
 
   IntSize getScreenSize();
 };
