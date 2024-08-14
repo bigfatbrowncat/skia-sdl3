@@ -9,12 +9,11 @@
 #include "GraphAppImpl.h"
 #include "SDLGraphAppBase.h"
 #include "SDL_oldnames.h"
+#include "SDL_video.h"
 
 #include <SDL3/SDL_main.h>
 
 using namespace std;
-
-#define TURN_SCREEN 1
 
 #ifndef SDL_APP_CONTINUE
 #  define SDL_APP_CONTINUE 0
@@ -98,21 +97,34 @@ extern "C" int GraphApp_main(GraphAppCallbacks* cb) {
   auto res = appInit(&appstate, cb);
   GraphAppImpl* app = appstate->impl;
 
-  IntSize sz = app->getScreenSize();
+  //IntSize sz = app->getScreenSize();
+  std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays = app->getDisplays();
 
   //auto res = SDL_APP_CONTINUE;
   SDL_Event event;
   while (res == SDL_APP_CONTINUE) {
     auto prev_time = SDL_GetTicks();
 
-    if (TURN_SCREEN) {
-      app->getCanvas()->translate(sz.height, 0);
-      app->getCanvas()->rotate(90);
-    }
-    res = appIterate(appstate);
-    if (TURN_SCREEN) {
-      app->getCanvas()->rotate(-90);
-      app->getCanvas()->translate(-sz.height, 0);
+    for (uint8_t current_display_index = 0; current_display_index < displays.size(); current_display_index ++) {
+      app->setCurrentDisplayIndex(current_display_index);
+      app->makeGLContextCurrent(app->windowsAndContexts[app->getCurrentDisplayIndex()]);
+
+      const auto& display_info = displays[current_display_index].second;
+      const IntSize& sz = display_info.size;
+      DisplayOrientation orientation = display_info.orientation;
+
+      printf("index: %d sz: %d, %d\n", current_display_index, sz.width, sz.height);
+      if (orientation == DISPLAY_ORIENTATION_LEFT_VERTICAL) {
+        app->getCanvas()->translate(sz.width, 0);
+        app->getCanvas()->rotate(90);
+      }
+
+      res = appIterate(appstate);
+
+      if (orientation == DISPLAY_ORIENTATION_LEFT_VERTICAL) {
+        app->getCanvas()->rotate(-90);
+        app->getCanvas()->translate(-sz.width, 0);
+      }
     }
 
     int FPS = appstate->impl->getFPS();
@@ -153,10 +165,11 @@ void SDLGraphAppBase::createFontMgr() {
   cout << "Font families count: " << families << endl;
 }
 
+std::vector<std::pair<SDL_DisplayID, DisplayInfo>> SDLGraphAppBase::getDisplays() {
+  std::vector<std::pair<SDL_DisplayID, DisplayInfo>> res;
 
-std::shared_ptr<SDL_DisplayID> SDLGraphAppBase::getMainDisplay() {
   int num_displays = 0;
-  std::shared_ptr<SDL_DisplayID> res = nullptr;
+  //std::shared_ptr<SDL_DisplayID> res = nullptr;
   const SDL_DisplayID *displays = SDL_GetDisplays(&num_displays);
   if (displays) {
     cout << "Displays: " << std::endl;
@@ -171,28 +184,52 @@ std::shared_ptr<SDL_DisplayID> SDLGraphAppBase::getMainDisplay() {
       }
       cout << endl;
 
+      DisplayInfo display_info;
+      display_info.size = { 0, 0 };
+
       int num_modes;
       const SDL_DisplayMode * const* modes = SDL_GetFullscreenDisplayModes(instance_id, &num_modes);
       cout << " - Modes:" << endl;
       if (modes) {
         for (int i = 0; i < num_modes; i++) {
           const SDL_DisplayMode *mode = modes[i];
-          cout << "   - " << mode->w << "x" << mode->h << " @ " << mode->refresh_rate << ", density = " << mode->pixel_density << endl;
+          cout << "   - " << mode->w << "x" << mode->h << " @ " << mode->refresh_rate << ", density = " << mode->pixel_density << endl << flush;
+
+          // If the mode is smaller or equal to 4K and
+          // it's bigger than the current one, setting it as our main
+          if ((uint64_t)display_info.size.width * (uint64_t)display_info.size.height < (uint64_t)mode->w * (uint64_t)mode->h &&
+               (uint64_t)mode->w * (uint64_t)mode->h <= 3840 * 2160) {
+            display_info.size.width = mode->w;
+            display_info.size.height = mode->h;
+          }
+          //  else {
+          //   if (mode->w > mode->h) {
+          //     display_info.size.width = 3840;
+          //     display_info.size.height = (uint64_t)3840 * mode->h / mode->w;
+          //   } else {
+          //     display_info.size.height = 3840;
+          //     display_info.size.width = (uint64_t)3840 * mode->w / mode->h;
+          //   }
+          // }
         }
-        //SDL_CleanupTemporaryMemory((void*)modes); //-- !!!
       }
 
       SDL_Rect bounds;
       SDL_GetDisplayBounds( instance_id, &bounds );
       cout << " - Bounds: " << bounds.x << ", " << bounds.y << ", " << bounds.w << ", " << bounds.h << std::endl;
 
-      //SDL_DisplayData *pData =(SDL_DisplayData*)SDL_GetDisplayDriverData(displayIndex);
-
+      // Checking if the display is the primary one.
+      // The check isn't pretty reliable, but this is all that SDL gives us...
       if (num_modes == 1 && modes[0]->w == 720 && modes[0]->h == 1280) {
-        res = std::make_shared<SDL_DisplayID>(instance_id);
+        // We only support vertical orientation for the main screen (that is by default portrait)
+        display_info.orientation = DISPLAY_ORIENTATION_LEFT_VERTICAL;
+        res.insert(res.begin(), std::make_pair(instance_id, display_info));
+      } else {
+        display_info.orientation = DISPLAY_ORIENTATION_HORIZONTAL;
+        // Pushing all the other displays to the end of the list
+        res.push_back(std::make_pair(instance_id, display_info));
       }
     }
-    //SDL_CleanupTemporaryMemory((void*)displays);
   }
   return res;
 }
@@ -204,13 +241,13 @@ void SDLGraphAppBase::initSDL() {
 }
 
 IntSize SDLGraphAppBase::getScreenSize() {
-  auto main_display_id = getMainDisplay();
-  if (main_display_id == nullptr) {
-    throw std::runtime_error("Can not find the standard display");
-  }
+  //auto main_display_id = getMainDisplay();
+  //if (main_display_id == nullptr) {
+  //  throw std::runtime_error("Can not find the standard display");
+  //}
 
-  SDL_Rect display_bounds;
-  SDL_GetDisplayBounds( *main_display_id, &display_bounds );
+  //SDL_Rect display_bounds;
+  //SDL_GetDisplayBounds( *main_display_id, &display_bounds );
 
 
   // int count;
@@ -223,22 +260,26 @@ IntSize SDLGraphAppBase::getScreenSize() {
   // const SDL_DisplayMode* dm = SDL_GetCurrentDisplayMode(ids[0]);
   // if (dm == 0) throwSDLError("Can not get screen size.");
 
-  if (TURN_SCREEN) {
-    return IntSize { display_bounds.h, display_bounds.w };
+  DisplayOrientation orientation = getCurrentDisplayInfo().orientation;
+  auto display_size = getCurrentDisplayInfo().size;
+  if (orientation == DISPLAY_ORIENTATION_LEFT_VERTICAL) {
+    return IntSize { display_size.height, display_size.width };
   } else {
-    return IntSize { display_bounds.w, display_bounds.h };
+    return IntSize { display_size.width, display_size.height };
   }
 }
 
-void SDLGraphAppBase::createSDLWindowAndContext() {
+SDLGraphAppBase::WinCon SDLGraphAppBase::createSDLWindowAndContext(SDL_DisplayID displayId) {
 
-  auto main_display_id = getMainDisplay();
-  if (main_display_id == nullptr) {
-    throw std::runtime_error("Can not find the standard display");
-  }
+  //std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays = getDisplays();
+
+  // if (main_display_id == nullptr) {
+  //   throw std::runtime_error("Can not find the standard display");
+  // }
 
   SDL_Rect display_bounds;
-  SDL_GetDisplayBounds( *main_display_id, &display_bounds );
+  SDL_GetDisplayBounds( displayId, &display_bounds );
+  printf("sdl win cr: %d, %d, %d, %d\n", display_bounds.x, display_bounds.y, display_bounds.w, display_bounds.h);
 
   SDL_PropertiesID props = SDL_CreateProperties();
   SDL_SetStringProperty(props, "title", "SDL window");
@@ -247,7 +288,7 @@ void SDLGraphAppBase::createSDLWindowAndContext() {
   SDL_SetNumberProperty(props, "width", display_bounds.w);
   SDL_SetNumberProperty(props, "height", display_bounds.h);
   SDL_SetNumberProperty(props, "flags", SDL_WINDOW_OPENGL /*| SDL_WINDOW_FULLSCREEN*/);
-  window = SDL_CreateWindowWithProperties(props);
+  SDL_Window* window = SDL_CreateWindowWithProperties(props);
   SDL_DestroyProperties(props);
 
   if (window == nullptr) {
@@ -255,15 +296,17 @@ void SDLGraphAppBase::createSDLWindowAndContext() {
   }
 
   // try and setup a GL context
-  glContext = SDL_GL_CreateContext(window);
+  SDL_GLContext glContext = SDL_GL_CreateContext(window);
   if (!glContext) {
     throwSDLError("Can't create context.");
   }
+
+  return { window, glContext };
 }
 
-void SDLGraphAppBase::makeGLContextCurrent() {
+void SDLGraphAppBase::makeGLContextCurrent(const WinCon& winCon) {
 
-  int success =  SDL_GL_MakeCurrent(window, glContext);
+  int success =  SDL_GL_MakeCurrent(winCon.window, winCon.context);
   if (success != 0) {
     throwSDLError("Can't make the context current.");
   }
@@ -273,12 +316,15 @@ void SDLGraphAppBase::makeGLContextCurrent() {
   //SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &contextType);
 }
 
-void SDLGraphAppBase::createSkiaContext() {
-  auto interface = GrGLInterfaces::MakeEGL();
-  sContext = GrDirectContexts::MakeGL(interface);
-}
+// void SDLGraphAppBase::createSkiaContext() {
+//   auto interface = GrGLInterfaces::MakeEGL();
+//   sContext = GrDirectContexts::MakeGL(interface);
+// }
 
-void SDLGraphAppBase::createSkiaSurface(int w, int h) {
+std::pair<sk_sp<GrDirectContext>, sk_sp<SkSurface>> SDLGraphAppBase::createSkiaSurface(int w, int h) {
+  auto interface = GrGLInterfaces::MakeEGL();
+  sk_sp<GrDirectContext> sContext = GrDirectContexts::MakeGL(interface);
+
   GrGLFramebufferInfo framebufferInfo;
 
   // Wrap the frame buffer object attached to the screen in a Skia render target so Skia can
@@ -299,7 +345,7 @@ void SDLGraphAppBase::createSkiaSurface(int w, int h) {
 
   //(replace line below with this one to enable correct color spaces) sSurface = SkSurfaces::WrapBackendRenderTarget(sContext, backendRenderTarget, kBottomLeft_GrSurfaceOrigin, colorType, SkColorSpace::MakeSRGB(), nullptr).release();
   GrRecordingContext* recContext = dynamic_cast<GrRecordingContext*>(sContext.get());
-  sSurface = SkSurfaces::WrapBackendRenderTarget(recContext,
+  sk_sp<SkSurface> sSurface = SkSurfaces::WrapBackendRenderTarget(recContext,
       backendRenderTarget,
       kBottomLeft_GrSurfaceOrigin,
       colorType,
@@ -309,29 +355,37 @@ void SDLGraphAppBase::createSkiaSurface(int w, int h) {
   if (sSurface == nullptr) {
     throw runtime_error("Can not create Skia surface.");
   }
+  return { sContext, sSurface };
 }
 
 SDLGraphAppBase::SDLGraphAppBase() {
   createFontMgr();
   initSDL();
-  createSDLWindowAndContext();
-  IntSize scrSz = getScreenSize();
 
-  makeGLContextCurrent();
+  std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays = getDisplays();
 
-  createSkiaContext();
+  for (size_t index = 0; index < displays.size(); index++) {
+    auto id = displays[index].first;
+    WinCon winCon = createSDLWindowAndContext(id);
+    windowsAndContexts.push_back(winCon);
 
+    makeGLContextCurrent(winCon);
+    //if (index == 0) createSkiaContext();  // !!!!!!! TODO Make itt correct way
+    SDL_DisplayID displayId = displays[index].first;
+    DisplayInfo& displayInfo = displays[index].second;
 
-  if (TURN_SCREEN) {
-    createSkiaSurface(scrSz.height, scrSz.width);
-  } else {
-    createSkiaSurface(scrSz.width, scrSz.height);
+//    if (displays[index].second.orientation == DISPLAY_ORIENTATION_LEFT_VERTICAL) {
+//      sSurfaces.push_back({ displayId, createSkiaSurface(sContext, displayInfo.size.height, displayInfo.size.width) });
+//    } else {
+      auto conSurf = createSkiaSurface(/*sContext,*/ displayInfo.size.width, displayInfo.size.height);
+      sSurfaces.push_back({ displayId, conSurf.first, conSurf.second });
+//    }
   }
 }
 
 SDLGraphAppBase::~SDLGraphAppBase() {
-  sSurface = nullptr;
-  sContext = nullptr;
+  //sSurface = nullptr;
+  //sContext = nullptr;
 }
 
 sk_sp<SkTypeface> SDLGraphAppBase::getTypeface(const string& name) {
@@ -345,7 +399,7 @@ sk_sp<SkTypeface> SDLGraphAppBase::getTypeface(const string& name) {
 }
 
 SkCanvas* SDLGraphAppBase::getCanvas() {
-  SkCanvas* canvas = sSurface->getCanvas();
+  SkCanvas* canvas = get<2>(sSurfaces[getCurrentDisplayIndex()])->getCanvas();
   if (canvas == nullptr) {
     throw runtime_error(string("Can not get a canvas for the surface"));
   }
@@ -353,7 +407,8 @@ SkCanvas* SDLGraphAppBase::getCanvas() {
 }
 
 void SDLGraphAppBase::commitDrawing() {
-  sContext->flushAndSubmit();
-  SDL_GL_SwapWindow(window);
+  auto skiaContext = std::get<1>(sSurfaces[getCurrentDisplayIndex()]);
+  skiaContext->flushAndSubmit();
+  SDL_GL_SwapWindow(windowsAndContexts[getCurrentDisplayIndex()].window);
 }
 

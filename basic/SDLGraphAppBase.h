@@ -6,32 +6,52 @@
 
 #include <SDL3/SDL.h>
 
+#include <tuple>
+#include <vector>
+
 class SDLGraphAppBase {
 private:
-  sk_sp<GrDirectContext> sContext = nullptr;
-  sk_sp<SkSurface> sSurface = nullptr;
+  struct WinCon {
+    SDL_Window *window;
+    SDL_GLContext context;
+  };
+
+  static void throwSDLError(const std::string& msg);
+  static WinCon createSDLWindowAndContext(SDL_DisplayID displayId);
+  static std::pair<sk_sp<GrDirectContext>, sk_sp<SkSurface>> createSkiaSurface(int w, int h);
+
+  //sk_sp<GrDirectContext> sContext = nullptr;
+  std::vector<std::tuple<SDL_DisplayID, sk_sp<GrDirectContext>, sk_sp<SkSurface>>> sSurfaces;
   sk_sp<SkFontMgr> fontMgr;
 
-  SDL_GLContext glContext = nullptr;
-  SDL_Window *window = NULL;
+  uint8_t currentDisplayIndex;
 
-  void throwSDLError(const std::string& msg);
   void createFontMgr();
   void initSDL();
 
-  void createSDLWindowAndContext();
-  void makeGLContextCurrent();
-  void createSkiaContext();
-  void createSkiaSurface(int w, int h);
+  //void createSkiaContext();
 
 public:
+  static void makeGLContextCurrent(const WinCon& winCon);
+  std::vector<WinCon> windowsAndContexts;
+
   SDLGraphAppBase();
   virtual ~SDLGraphAppBase();
 
   sk_sp<SkTypeface> getTypeface(const std::string& name);
   SkCanvas* getCanvas();
   void commitDrawing();
-  std::shared_ptr<SDL_DisplayID> getMainDisplay();
+
+  // This function guarantees that the main display will be the first (index=0) one
+  static std::vector<std::pair<SDL_DisplayID, DisplayInfo>> getDisplays();
+
+  DisplayInfo getCurrentDisplayInfo() {
+    std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays = getDisplays();
+    return displays[currentDisplayIndex].second;
+  }
+  void setCurrentDisplayIndex(uint8_t index) { currentDisplayIndex = index; }
+  uint8_t getCurrentDisplayIndex() { return currentDisplayIndex; }
+
 
   IntSize getScreenSize();
 };

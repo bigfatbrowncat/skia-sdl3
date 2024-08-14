@@ -13,9 +13,19 @@ struct GraphAppCallbacks {
   fin_callback* onFin;
 };
 
+typedef enum DisplayOrientation {
+  DISPLAY_ORIENTATION_HORIZONTAL,
+  DISPLAY_ORIENTATION_LEFT_VERTICAL
+} DisplayOrientation;
+
 typedef struct IntSize {
   int width, height;
 } IntSize;
+
+typedef struct DisplayInfo {
+  IntSize size;
+  DisplayOrientation orientation;
+} DisplayInfo;
 
 typedef struct TextBounds {
   float left, top, right, bottom;

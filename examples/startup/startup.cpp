@@ -1,3 +1,4 @@
+#include <string>
 using namespace std;
 
 INIT() {
@@ -17,10 +18,10 @@ LOOP() {
   setBackColor(0.25, 0.25, 0.5);
   clear();
 
-  string hello = "Hello, world!";
+  string hello = "Hello, world! " + to_string(scrSize.width) + "x" + to_string(scrSize.height);
 
   // Setting the font size proportional to the screen size
-  setFontSize(scrSize.width / 8.0);
+  setFontSize(scrSize.width / 16.0);
 
   // Measuring the text line using the current font
   auto textMeasures  = measureText(hello);
