@@ -131,15 +131,18 @@ extern "C" int GraphApp_main(GraphAppCallbacks* cb) {
     auto mspf = 0;
     if (FPS > 0) mspf = 1000 / FPS;
 
-
-    if (FPS > 0) {
-      while (SDL_GetTicks() - prev_time < mspf && res == SDL_APP_CONTINUE) {
-        SDL_WaitEventTimeout(&event, mspf - (SDL_GetTicks() - prev_time));
+    if (res == SDL_APP_CONTINUE) {
+      if (FPS > 0) {
+        do {
+          int64_t delta = mspf - (SDL_GetTicks() - prev_time);
+          if (delta < 0) delta = 0;
+          SDL_WaitEventTimeout(&event, delta);
+          res = appEvent(appstate, &event);
+        } while (SDL_GetTicks() - prev_time < mspf && res == SDL_APP_CONTINUE);
+      } else {
+        SDL_WaitEvent(&event);
         res = appEvent(appstate, &event);
       }
-    } else {
-      SDL_WaitEvent(&event);
-      res = appEvent(appstate, &event);
     }
   }
 
