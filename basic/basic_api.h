@@ -25,6 +25,10 @@ typedef struct IntSize {
 typedef struct DisplayInfo {
   IntSize size;
   DisplayOrientation orientation;
+  void* modes;
+  int modesCount;
+  int preferredModeIndex;
+  int selectedModeIndex;
 } DisplayInfo;
 
 typedef struct TextBounds {

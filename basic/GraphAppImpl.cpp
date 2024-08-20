@@ -23,8 +23,7 @@ GraphAppImpl::GraphAppImpl(GraphAppCallbacks* cb)
       ),
       typefaceName("sans-serif"),
       fontSize(20.0f),
-      typeface(getTypeface(typefaceName)),
-      FPS(60) {
+      typeface(getTypeface(typefaceName)) {
   updateFont();
   updateForePaint();
   updateBackPaint();
@@ -41,14 +40,6 @@ void GraphAppImpl::setFontName(const std::string name) {
 void GraphAppImpl::setFontSize(float size) {
   fontSize = size;
   updateFont();
-}
-
-void GraphAppImpl::setFPS(int FPS) {
-  this->FPS = FPS;
-}
-
-int GraphAppImpl::getFPS() {
-  return FPS;
 }
 
 // "Global" drawing fuunctions go here

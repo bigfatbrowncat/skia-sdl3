@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 using namespace std;
 
 INIT() {
@@ -7,9 +8,11 @@ INIT() {
 FIN() {
 }
 
+int ff = 0;
+
 LOOP() {
   // Setting minimal FPS
-  setFPS(1);
+  if (ff++ < 2) { setFPS(ff+1); cout << "----------------" << ff << flush << endl; }
 
   // Finding out the screen size
   auto scrSize = getScreenSize();

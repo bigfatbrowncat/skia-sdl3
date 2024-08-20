@@ -16,14 +16,19 @@ class UserApp : public GraphApp {
   ofstream power_log;
   int prev_min;
 
+  int frame_index;
+
 public:
   UserApp() {
     start = clk::now();
     angle = 0.0;
+    frame_index = 0;
     power_log = ofstream("powerlog.txt");
   }
 
   void onLoop() {
+    frame_index ++;
+
     ifstream bat("/sys/class/power_supply/axp20x-battery/capacity");
     string capacity;
     bat >> capacity;
@@ -35,7 +40,11 @@ public:
     l -= w / 2;
     t -= h / 2;
 
-    setFPS(20);
+    if ((frame_index / 300) % 2 == 0) {
+      setFPS(30);
+    } else {
+      setFPS(60);
+    }
 
     auto curTime = clk::now();
     double secd = chrono::duration_cast<chrono::milliseconds>(curTime - start).count();

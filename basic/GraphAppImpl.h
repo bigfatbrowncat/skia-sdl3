@@ -17,7 +17,6 @@ private:
   sk_sp<SkTypeface> typeface;
   SkFont font;
 
-  int FPS;
 
   void updateFont();
   void updateForePaint();
@@ -31,8 +30,7 @@ public:
 
   void setFontName(const std::string name);
   void setFontSize(float size);
-  void setFPS(int FPS);
-  int getFPS();
+  //virtual void setFPS(int FPS);
 
   // "Global" drawing fuunctions go here
   void setBackColor(float r, float g, float b, float a = 1.0f);

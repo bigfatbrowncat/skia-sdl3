@@ -14,14 +14,16 @@ private:
   struct WinCon {
     SDL_Window *window;
     SDL_GLContext context;
+    sk_sp<GrDirectContext> sContext;
   };
 
   static void throwSDLError(const std::string& msg);
-  static WinCon createSDLWindowAndContext(SDL_DisplayID displayId);
-  static std::pair<sk_sp<GrDirectContext>, sk_sp<SkSurface>> createSkiaSurface(int w, int h);
+  WinCon createSDLWindowAndContext(SDL_DisplayID displayId);
+  sk_sp<SkSurface> createSkiaSurface(WinCon& wincon, int w, int h);
 
   //sk_sp<GrDirectContext> sContext = nullptr;
-  std::vector<std::tuple<SDL_DisplayID, sk_sp<GrDirectContext>, sk_sp<SkSurface>>> sSurfaces;
+  std::vector<std::pair<SDL_DisplayID, sk_sp<SkSurface>>> sSurfaces;
+  std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays;
   sk_sp<SkFontMgr> fontMgr;
 
   uint8_t currentDisplayIndex;
@@ -29,7 +31,9 @@ private:
   void createFontMgr();
   void initSDL();
 
-  //void createSkiaContext();
+  int FPS;
+  int newFPS;
+  //sk_sp<GrDirectContext> sContext;
 
 public:
   static void makeGLContextCurrent(const WinCon& winCon);
@@ -43,15 +47,24 @@ public:
   void commitDrawing();
 
   // This function guarantees that the main display will be the first (index=0) one
-  static std::vector<std::pair<SDL_DisplayID, DisplayInfo>> getDisplays();
+  void updateDisplays();
+  const std::vector<std::pair<SDL_DisplayID, DisplayInfo>>& getDisplays() { return displays; }
+
+  SDL_DisplayID getCurrentDisplayId() {
+    const std::vector<std::pair<SDL_DisplayID, DisplayInfo>>& displays = getDisplays();
+    return displays[currentDisplayIndex].first;
+  }
 
   DisplayInfo getCurrentDisplayInfo() {
-    std::vector<std::pair<SDL_DisplayID, DisplayInfo>> displays = getDisplays();
+    const std::vector<std::pair<SDL_DisplayID, DisplayInfo>>& displays = getDisplays();
     return displays[currentDisplayIndex].second;
   }
   void setCurrentDisplayIndex(uint8_t index) { currentDisplayIndex = index; }
   uint8_t getCurrentDisplayIndex() { return currentDisplayIndex; }
 
+  void setFPS(int FPS);
+  int getFPS();
+  void updateSurfacesIfFPSUpdated();
 
   IntSize getScreenSize();
 };
